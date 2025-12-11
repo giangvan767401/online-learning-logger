@@ -26,17 +26,22 @@ async function sendSummaryLog() {
   });
 }
 
-// Theo dõi video
+// THEO DÕI VIDEO – ĐÃ SỬA ĐỂ TUA THOẢI MÁI VẪN TÍNH ĐÚNG %
 function onVideoTimeUpdate(video) {
   if (!video.duration) return;
+
   const percent = Math.round((video.currentTime / video.duration) * 100);
-  if (percent > videoPercentage) videoPercentage = percent;
+  if (percent > videoPercentage) {
+    videoPercentage = percent; // chỉ tăng, không giảm khi tua lùi
+  }
 }
+
+// ĐẢM BẢO KHI VIDEO KẾT THÚC = 100%
 function onVideoEnded() {
   videoPercentage = 100;
 }
 
-// Quiz
+// Quiz – giữ nguyên
 function answer(qid, score) {
   if (document.getElementById('r' + qid.slice(1)).innerHTML) return;
   document.getElementById('r' + qid.slice(1)).innerHTML = score === 10 ? 'Correct' : 'Wrong';
@@ -44,14 +49,14 @@ function answer(qid, score) {
   document.getElementById('totalScore').textContent = `Điểm: ${quizScore}/50`;
 }
 
-// Đăng xuất → ghi 1 dòng duy nhất
+// ĐĂNG XUẤT → GHI LOG NGAY LẬP TỨC (dù hoàn thành hay không)
 function logout() {
   sendSummaryLog();
   localStorage.clear();
   location.href = '/';
 }
 
-// TỰ ĐỘNG GHI LOG KHI THOÁT ĐỘT NGỘT (đã sửa lỗi deprecated)
+// GHI LOG KHI THOÁT ĐỘT NGỘT / ĐÓNG TAB (đã sửa lỗi deprecated)
 window.addEventListener('beforeunload', () => {
   navigator.sendBeacon(API_URL, JSON.stringify({
     student_id: localStorage.getItem('student_id') || 'unknown',
