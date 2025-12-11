@@ -5,29 +5,34 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const LOG_FILE = 'logs/learning_log.xlsx';
+const LOG_FILE = 'logs/learning_log.xlsx';  // giữ nguyên đường dẫn cũ
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
+
 if (!fs.existsSync('logs')) fs.mkdirSync('logs');
 
-// WAKE-UP CHO RENDER FREE TIER
 app.use((req, res, next) => {
   if (req.query.wake) return res.send('Server đã wake!');
   next();
 });
 
+// === DÁN HÀM appendLog MỚI VÀO ĐÂY (thay toàn bộ hàm cũ) ===
 async function appendLog(data) {
   const workbook = new ExcelJS.Workbook();
-  let worksheet;
 
   if (fs.existsSync(LOG_FILE)) {
-    try { await workbook.xlsx.readFile(LOG_FILE); }
-    catch (err) { fs.renameSync(LOG_FILE, LOG_FILE.replace('.xlsx', `_corrupted_${Date.now()}.xlsx`)); }
+    try {
+      await workbook.xlsx.readFile(LOG_FILE);
+      console.log('Đọc file log thành công');
+    } catch (err) {
+      console.warn('Không đọc được file log (có thể đang bị khóa hoặc lỗi), sẽ tạo/sửa lại:', err.message);
+    }
   }
 
-  worksheet = workbook.getWorksheet('Logs') || workbook.addWorksheet('Logs');
-  if (worksheet.columns.length === 0) {
+  const worksheet = workbook.getWorksheet('Logs') || workbook.addWorksheet('Logs');
+
+  if (worksheet.rowCount === 0 || worksheet.columns.length === 0) {
     worksheet.columns = [
       { header: 'Thời gian đăng nhập', key: 'timestamp', width: 22 },
       { header: 'Mã SV', key: 'student_id', width: 12 },
@@ -57,8 +62,14 @@ async function appendLog(data) {
     note: data.note || ''
   });
 
-  await workbook.xlsx.writeFile(LOG_FILE);
+  try {
+    await workbook.xlsx.writeFile(LOG_FILE);
+    console.log('Ghi log thành công:', data.student_id, data.note || 'Đăng nhập');
+  } catch (err) {
+    console.error('LỖI KHI GHI FILE LOG:', err);
+  }
 }
+// ==========================================
 
 app.post('/api/log', async (req, res) => {
   try {
@@ -76,7 +87,8 @@ app.use('/logs', express.static('logs'));
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server chạy tại port ${PORT}`);
-  // TỰ TẠO FILE MẪU
+  
+  // Tạo file mẫu nếu chưa có
   if (!fs.existsSync(LOG_FILE)) {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Logs');
@@ -96,5 +108,6 @@ app.listen(PORT, '0.0.0.0', () => {
     ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1f4e79' } };
     ws.addRow({ timestamp: new Date().toISOString().replace('T', ' ').substring(0,19), student_id: 'TEST', full_name: 'File mẫu', note: 'Hệ thống sẵn sàng!' });
     wb.xlsx.writeFile(LOG_FILE);
+    console.log('Đã tạo file log mẫu');
   }
 });
