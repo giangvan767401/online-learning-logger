@@ -6,7 +6,9 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+// QUAN TRỌNG: Render yêu cầu listen ở process.env.PORT và bind 0.0.0.0
+const PORT = process.env.PORT || 10000;
 
 // Middleware
 app.use(cors());
@@ -14,10 +16,10 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
-// Tạo thư mục logs nếu chưa có
+// Tạo thư mục logs
 if (!fs.existsSync('./logs')) fs.mkdirSync('./logs');
 
-// Lấy file Excel theo ngày
+// Hàm lấy workbook theo ngày (giữ nguyên của bạn)
 async function getWorkbook(dateStr) {
   const filename = `logs/learning_log_${dateStr}.xlsx`;
   let workbook = new ExcelJS.Workbook();
@@ -83,13 +85,20 @@ app.post('/api/log', async (req, res) => {
   }
 });
 
+// Trang chủ + tải file
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-app.use('/logs', express.static('logs'));
+app.get('/download', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'download.html'));
+});
 
-app.listen(PORT, () => {
-  console.log(`Server đang chạy tại: http://localhost:${PORT}`);
-  console.log(`File log sẽ tự động lưu tại: /logs/learning_log_YYYY-MM-DD.xlsx`);
+app.use('/logs', express.static('logs')); // cho phép tải file Excel
+
+// CHỈ DÙNG 1 DÒNG LISTEN DUY NHẤT NÀY
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server đang chạy thành công tại port: ${PORT}`);
+  console.log(`Link web: https://your-app.onrender.com`);
+  console.log(`File log hôm nay: /logs/learning_log_${new Date().toISOString().slice(0,10)}.xlsx`);
 });
