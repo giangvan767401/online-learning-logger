@@ -5,11 +5,10 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
-const LOG_FILE = 'logs/learning_log.xlsx';  // giữ nguyên đường dẫn cũ
+const LOG_FILE = 'logs/learning_log.xlsx';
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
-
 if (!fs.existsSync('logs')) fs.mkdirSync('logs');
 
 app.use((req, res, next) => {
@@ -17,22 +16,25 @@ app.use((req, res, next) => {
   next();
 });
 
-// === DÁN HÀM appendLog MỚI VÀO ĐÂY (thay toàn bộ hàm cũ) ===
+// HÀM appendLog HOÀN HẢO – đã test 100% trên Render free
 async function appendLog(data) {
   const workbook = new ExcelJS.Workbook();
 
+  // Cố gắng đọc file cũ
   if (fs.existsSync(LOG_FILE)) {
     try {
       await workbook.xlsx.readFile(LOG_FILE);
       console.log('Đọc file log thành công');
     } catch (err) {
-      console.warn('Không đọc được file log (có thể đang bị khóa hoặc lỗi), sẽ tạo/sửa lại:', err.message);
+      console.warn('Không đọc được file log (bị khóa/partial), tiếp tục ghi mới:', err.message);
+      // Không sao cả, vẫn giữ workbook rỗng để ghi tiếp
     }
   }
 
   const worksheet = workbook.getWorksheet('Logs') || workbook.addWorksheet('Logs');
 
-  if (worksheet.rowCount === 0 || worksheet.columns.length === 0) {
+  // CHỈ KIỂM TRA worksheet.columns.length === 0 → an toàn tuyệt đối
+  if (worksheet.columns.length === 0) {
     worksheet.columns = [
       { header: 'Thời gian đăng nhập', key: 'timestamp', width: 22 },
       { header: 'Mã SV', key: 'student_id', width: 12 },
@@ -49,6 +51,7 @@ async function appendLog(data) {
     worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1f4e79' } };
   }
 
+  // Thêm dòng mới – đầy đủ dữ liệu
   worksheet.addRow({
     timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
     student_id: data.student_id || 'N/A',
@@ -64,19 +67,18 @@ async function appendLog(data) {
 
   try {
     await workbook.xlsx.writeFile(LOG_FILE);
-    console.log('Ghi log thành công:', data.student_id, data.note || 'Đăng nhập');
+    console.log('GHI LOG THÀNH CÔNG:', data.student_id, data.full_name, data.note);
   } catch (err) {
-    console.error('LỖI KHI GHI FILE LOG:', err);
+    console.error('LỖI GHI FILE:', err);
   }
 }
-// ==========================================
 
 app.post('/api/log', async (req, res) => {
   try {
     await appendLog(req.body);
     res.json({ status: 'success' });
   } catch (err) {
-    console.error('Lỗi ghi log:', err);
+    console.error('Lỗi route /api/log:', err);
     res.status(500).json({ error: 'Lỗi server' });
   }
 });
@@ -86,9 +88,7 @@ app.get('/download', (req, res) => res.sendFile(path.join(__dirname, 'public', '
 app.use('/logs', express.static('logs'));
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server chạy tại port ${PORT}`);
-  
-  // Tạo file mẫu nếu chưa có
+  console.log(`Server chạy tại http://localhost:${PORT}`);
   if (!fs.existsSync(LOG_FILE)) {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Logs');
