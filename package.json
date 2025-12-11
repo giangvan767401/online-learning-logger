@@ -1,0 +1,19 @@
+{
+  "name": "online-learning-logger",
+  "version": "1.0.0",
+  "description": "Web học online + thu log hành vi sinh viên → xuất Excel tự động mỗi ngày",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "exceljs": "^4.4.0",
+    "cors": "^2.8.5",
+    "morgan": "^1.10.0"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

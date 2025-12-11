@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Khóa học - MATH101</title>
+  <script src="js/main.js" defer></script>
+  <style>
+    body { font-family: Arial; margin: 20px; background: #f9f9f9; }
+    .header { background: #1f4e79; color: white; padding: 15px; border-radius: 8px; text-align: center; }
+    .video-container { margin: 30px 0; text-align: center; }
+    video { width: 80%; max-width: 800px; border: 3px solid #1f4e79; border-radius: 10px; }
+    .quiz { margin: 30px 0; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    button { padding: 10px 20px; background: #1f4e79; color: white; border: none; border-radius: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Chào mừng <span id="student_name"></span> - Môn: <span id="course"></span></h1>
+  </div>
+
+  <div class="video-container">
+    <h2>Bài giảng 1: Giới thiệu</h2>
+    <video controls data-video-id="lec01" id="mainVideo">
+      <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+      Trình duyệt không hỗ trợ video.
+    </video>
+  </div>
+
+  <div class="quiz">
+    <h3>Câu hỏi kiểm tra</h3>
+    <p>1 + 1 = ?</p>
+    <button onclick="submitQuiz('q1', 10)">Đáp án đúng (10 điểm)</button>
+    <button onclick="submitQuiz('q1', 0)">Đáp án sai</button>
+  </div>
+
+  <script>
+    document.getElementById('student_name').textContent = localStorage.getItem('full_name') || 'Sinh viên';
+    document.getElementById('course').textContent = localStorage.getItem('course_id') || 'N/A';
+
+    const video = document.getElementById('mainVideo');
+    video.addEventListener('timeupdate', () => onVideoTimeUpdate(video));
+    video.addEventListener('ended', () => onVideoEnded(video));
+  </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Đăng nhập - Hệ thống học online</title>
+  <style>
+    body { font-family: Arial; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin:0; }
+    .login-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 350px; }
+    input, button { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; }
+    button { background: #1f4e79; color: white; font-size: 16px; cursor: pointer; }
+    h2 { text-align: center; color: #1f4e79; }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>Đăng nhập sinh viên</h2>
+    <input type="text" id="student_id" placeholder="Mã sinh viên (VD: SV2023001)" />
+    <input type="text" id="full_name" placeholder="Họ và tên" />
+    <input type="text" id="course_id" placeholder="Mã môn học (VD: MATH101)" value="MATH101" />
+    <button onclick="login()">Vào học</button>
+  </div>
+
+  <script>
+    function login() {
+      const id = document.getElementById('student_id').value.trim();
+      const name = document.getElementById('full_name').value.trim();
+      const course = document.getElementById('course_id').value.trim();
+      if (!id || !name) return alert("Vui lòng nhập đầy đủ!");
+      localStorage.setItem('student_id', id);
+      localStorage.setItem('full_name', name);
+      localStorage.setItem('course_id', course || 'UNKNOWN');
+      location.href = '/course.html';
+    }
+  </script>
+</body>
+</html>
