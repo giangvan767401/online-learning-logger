@@ -27,9 +27,31 @@
       const name = document.getElementById('full_name').value.trim();
       const course = document.getElementById('course_id').value.trim();
       if (!id || !name) return alert("Vui lòng nhập đầy đủ!");
+
       localStorage.setItem('student_id', id);
       localStorage.setItem('full_name', name);
-      localStorage.setItem('course_id', course || 'UNKNOWN');
+      localStorage.setItem('course_id', course || 'MATH101');
+
+      // Ghi log đăng nhập ngay lập tức
+      fetch('/api/log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          student_id: id,
+          full_name: name,
+          course_id: course || 'MATH101',
+          login_count: (Number(localStorage.getItem('login_count') || '0') + 1),
+          duration_seconds: 0,
+          video_percentage: 0,
+          total_quiz_score: 0,
+          completed: 'Chưa',
+          note: 'Đăng nhập lần mới'
+        })
+      });
+
+      // Cập nhật số lần đăng nhập
+      localStorage.setItem('login_count', Number(localStorage.getItem('login_count') || '0') + 1);
+
       location.href = '/course.html';
     }
   </script>

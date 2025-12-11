@@ -1,110 +1,66 @@
 const express = require('express');
 const ExcelJS = require('exceljs');
-const cors = require('cors');
-const morgan = require('morgan');
 const path = require('path');
 const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 10000;
+const LOG_FILE = 'logs/learning_log.xlsx';
 
-app.use(cors());
-app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
+if (!fs.existsSync('logs')) fs.mkdirSync('logs');
 
-// Tạo thư mục logs
-if (!fs.existsSync('./logs')) fs.mkdirSync('./logs');
-
-// File log duy nhất
-const FILENAME = 'logs/learning_log.xlsx';
-
-// Hàm lấy workbook AN TOÀN (1 file duy nhất)
-async function getWorkbookSafe() {
+async function appendLog(data) {
   const workbook = new ExcelJS.Workbook();
+  let worksheet;
 
-  // Nếu file chưa tồn tại → tạo mới
-  if (!fs.existsSync(FILENAME)) {
-    const worksheet = workbook.addWorksheet('Learning Logs');
+  if (fs.existsSync(LOG_FILE)) {
+    try { await workbook.xlsx.readFile(LOG_FILE); }
+    catch (err) { fs.renameSync(LOG_FILE, LOG_FILE.replace('.xlsx', `_corrupted_${Date.now()}.xlsx`)); }
+  }
+
+  worksheet = workbook.getWorksheet('Logs') || workbook.addWorksheet('Logs');
+  if (worksheet.columns.length === 0) {
     worksheet.columns = [
-      { header: 'Thời gian', key: 'timestamp', width: 22 },
+      { header: 'Thời gian đăng nhập', key: 'timestamp', width: 22 },
       { header: 'Mã SV', key: 'student_id', width: 12 },
-      { header: 'Họ tên', key: 'full_name', width: 22 },
-      { header: 'Môn học', key: 'course_id', width: 15 },
-      { header: 'Hành động', key: 'action', width: 20 },
-      { header: 'Video ID', key: 'video_id', width: 15 },
-      { header: 'Thời lượng (giây)', key: 'duration', width: 12 },
-      { header: 'Tỷ lệ xem (%)', key: 'percentage', width: 10 },
-      { header: 'Quiz ID', key: 'quiz_id', width: 12 },
-      { header: 'Điểm Quiz', key: 'quiz_score', width: 10 },
-      { header: 'Trang', key: 'page_url', width: 40 },
-      { header: 'IP', key: 'ip', width: 15 },
-      { header: 'Trình duyệt', key: 'user_agent', width: 50 },
+      { header: 'Họ tên', key: 'full_name', width: 20 },
+      { header: 'Số lần đăng nhập', key: 'login_count', width: 12 },
+      { header: 'Môn học', key: 'course_id', width: 12 },
+      { header: 'Thời gian học (giây)', key: 'duration_seconds', width: 15 },
+      { header: '% Xem video', key: 'video_percentage', width: 12 },
+      { header: 'Tổng điểm Quiz', key: 'total_quiz_score', width: 12 },
+      { header: 'Hoàn thành', key: 'completed', width: 12 },
+      { header: 'Ghi chú', key: 'note', width: 30 },
     ];
     worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
     worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1f4e79' } };
-    return { workbook, worksheet };
   }
 
-  // Nếu file tồn tại → thử đọc, nếu lỗi → đổi tên + tạo mới
-  try {
-    await workbook.xlsx.readFile(FILENAME);
-    return { workbook, worksheet: workbook.getWorksheet('Learning Logs') || workbook.addWorksheet('Learning Logs') };
-  } catch (err) {
-    console.warn(`File Excel bị lỗi → đổi tên và tạo mới: ${FILENAME}`);
-    const backupName = `logs/learning_log_corrupted_${Date.now()}.xlsx`;
-    fs.renameSync(FILENAME, backupName);
-    // Tạo mới
-    const worksheet = workbook.addWorksheet('Learning Logs');
-    worksheet.columns = [
-      { header: 'Thời gian', key: 'timestamp', width: 22 },
-      { header: 'Mã SV', key: 'student_id', width: 12 },
-      { header: 'Họ tên', key: 'full_name', width: 22 },
-      { header: 'Môn học', key: 'course_id', width: 15 },
-      { header: 'Hành động', key: 'action', width: 20 },
-      { header: 'Video ID', key: 'video_id', width: 15 },
-      { header: 'Thời lượng (giây)', key: 'duration', width: 12 },
-      { header: 'Tỷ lệ xem (%)', key: 'percentage', width: 10 },
-      { header: 'Quiz ID', key: 'quiz_id', width: 12 },
-      { header: 'Điểm Quiz', key: 'quiz_score', width: 10 },
-      { header: 'Trang', key: 'page_url', width: 40 },
-      { header: 'IP', key: 'ip', width: 15 },
-      { header: 'Trình duyệt', key: 'user_agent', width: 50 },
-    ];
-    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1f4e79' } };
-    return { workbook, worksheet };
-  }
+  worksheet.addRow({
+    timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+    student_id: data.student_id || 'N/A',
+    full_name: data.full_name || 'N/A',
+    login_count: data.login_count || 1,
+    course_id: data.course_id || 'MATH101',
+    duration_seconds: data.duration_seconds || 0,
+    video_percentage: data.video_percentage || 0,
+    total_quiz_score: data.total_quiz_score || 0,
+    completed: data.completed || 'Không',
+    note: data.note || ''
+  });
+
+  await workbook.xlsx.writeFile(LOG_FILE);
 }
 
-// API ghi log
 app.post('/api/log', async (req, res) => {
   try {
-    const { workbook, worksheet } = await getWorkbookSafe();
-
-    const logEntry = {
-      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
-      student_id: req.body.student_id || 'N/A',
-      full_name: req.body.full_name || 'N/A',
-      course_id: req.body.course_id || 'N/A',
-      action: req.body.action || '',
-      video_id: req.body.video_id || '',
-      duration: req.body.duration || 0,
-      percentage: req.body.percentage || 0,
-      quiz_id: req.body.quiz_id || '',
-      quiz_score: req.body.quiz_score || '',
-      page_url: req.body.page_url || req.headers.referer || '',
-      ip: req.ip?.replace('::ffff:', '') || '',
-      user_agent: req.headers['user-agent'] || '',
-    };
-
-    worksheet.addRow(logEntry);
-    await workbook.xlsx.writeFile(FILENAME);
-
+    await appendLog(req.body);
     res.json({ status: 'success' });
   } catch (err) {
-    console.error('Lỗi không mong muốn khi ghi log:', err);
-    res.status(500).json({ error: 'Lưu thất bại' });
+    console.error(err);
+    res.status(500).json({ error: 'Lỗi' });
   }
 });
 
@@ -112,7 +68,4 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.ht
 app.get('/download', (req, res) => res.sendFile(path.join(__dirname, 'public', 'download.html')));
 app.use('/logs', express.static('logs'));
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server chạy ổn định tại port ${PORT}`);
-  console.log(`Tải log: /download (file learning_log.xlsx)`);
-});
+app.listen(PORT, '0.0.0.0', () => console.log(`Server chạy tại port ${PORT}`));
