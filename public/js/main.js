@@ -9,7 +9,7 @@ async function sendSummaryLog() {
   const durationSeconds = Math.floor((Date.now() - startTime) / 1000);
   const completed = (videoPercentage >= 90 && quizScore >= 30) ? 'Có' : 'Không';
 
-  await fetch(API_URL, {
+  await fetch(API_URL + '?wake=1', {  // thêm ?wake=1 để wake Render
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -26,22 +26,19 @@ async function sendSummaryLog() {
   });
 }
 
-// THEO DÕI VIDEO – ĐÃ SỬA ĐỂ TUA THOẢI MÁI VẪN TÍNH ĐÚNG %
+// Theo dõi video – tua thoải mái vẫn tính đúng
 function onVideoTimeUpdate(video) {
   if (!video.duration) return;
-
   const percent = Math.round((video.currentTime / video.duration) * 100);
   if (percent > videoPercentage) {
-    videoPercentage = percent; // chỉ tăng, không giảm khi tua lùi
+    videoPercentage = percent;
   }
 }
-
-// ĐẢM BẢO KHI VIDEO KẾT THÚC = 100%
 function onVideoEnded() {
   videoPercentage = 100;
 }
 
-// Quiz – giữ nguyên
+// Quiz
 function answer(qid, score) {
   if (document.getElementById('r' + qid.slice(1)).innerHTML) return;
   document.getElementById('r' + qid.slice(1)).innerHTML = score === 10 ? 'Correct' : 'Wrong';
@@ -49,16 +46,16 @@ function answer(qid, score) {
   document.getElementById('totalScore').textContent = `Điểm: ${quizScore}/50`;
 }
 
-// ĐĂNG XUẤT → GHI LOG NGAY LẬP TỨC (dù hoàn thành hay không)
+// Đăng xuất → luôn ghi log
 function logout() {
   sendSummaryLog();
   localStorage.clear();
   location.href = '/';
 }
 
-// GHI LOG KHI THOÁT ĐỘT NGỘT / ĐÓNG TAB (đã sửa lỗi deprecated)
+// Ghi log khi thoát đột ngột
 window.addEventListener('beforeunload', () => {
-  navigator.sendBeacon(API_URL, JSON.stringify({
+  navigator.sendBeacon(API_URL + '?wake=1', JSON.stringify({
     student_id: localStorage.getItem('student_id') || 'unknown',
     full_name: localStorage.getItem('full_name') || 'unknown',
     course_id: localStorage.getItem('course_id') || 'unknown',

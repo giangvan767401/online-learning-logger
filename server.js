@@ -11,6 +11,14 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 if (!fs.existsSync('logs')) fs.mkdirSync('logs');
 
+// WAKE-UP CHO RENDER FREE TIER (BẮT BUỘC!)
+app.use((req, res, next) => {
+  if (req.query.wake) {
+    return res.send('Server đã wake!');
+  }
+  next();
+});
+
 async function appendLog(data) {
   const workbook = new ExcelJS.Workbook();
   let worksheet;

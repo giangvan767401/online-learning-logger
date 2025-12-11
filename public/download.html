@@ -6,13 +6,14 @@
     Tải learning_log.xlsx
   </button>
   <script>
-    async function download() {
-      const url = '/logs/learning_log.xlsx';
+    function download() {
+      const url = '/logs/learning_log.xlsx?t=' + Date.now();
       const a = document.createElement('a');
       a.href = url;
       a.download = 'learning_log.xlsx';
       a.click();
     }
   </script>
+  <p>Nếu chưa có file: Hãy học + bấm Đăng xuất 1 lần!</p>
   <hr><p><a href="/">← Về trang đăng nhập</a></p>
 </body></html>
