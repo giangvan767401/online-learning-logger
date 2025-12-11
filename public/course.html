@@ -10,8 +10,9 @@
     .header { background: #1f4e79; color: white; padding: 15px; border-radius: 8px; text-align: center; }
     .video-container { margin: 30px 0; text-align: center; }
     video { width: 80%; max-width: 800px; border: 3px solid #1f4e79; border-radius: 10px; }
-    .quiz { margin: 30px 0; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    button { padding: 10px 20px; background: #1f4e79; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    .quiz { margin: 30px 0; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; } /* Ban đầu ẩn quiz */
+    button { padding: 10px 20px; background: #1f4e79; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+    .quiz-question { margin-bottom: 20px; }
   </style>
 </head>
 <body>
@@ -27,11 +28,38 @@
     </video>
   </div>
 
-  <div class="quiz">
-    <h3>Câu hỏi kiểm tra</h3>
-    <p>1 + 1 = ?</p>
-    <button onclick="submitQuiz('q1', 10)">Đáp án đúng (10 điểm)</button>
-    <button onclick="submitQuiz('q1', 0)">Đáp án sai</button>
+  <div class="quiz" id="quizSection">
+    <h3>Kiểm tra kiến thức (5 câu)</h3>
+    
+    <div class="quiz-question">
+      <p>1. 1 + 1 = ?</p>
+      <button onclick="submitQuiz('q1', 10)">2</button>
+      <button onclick="submitQuiz('q1', 0)">3</button>
+    </div>
+    
+    <div class="quiz-question">
+      <p>2. Thủ đô Việt Nam là đâu?</p>
+      <button onclick="submitQuiz('q2', 10)">Hà Nội</button>
+      <button onclick="submitQuiz('q2', 0)">Sài Gòn</button>
+    </div>
+    
+    <div class="quiz-question">
+      <p>3. Màu trời là gì?</p>
+      <button onclick="submitQuiz('q3', 10)">Xanh</button>
+      <button onclick="submitQuiz('q3', 0)">Đỏ</button>
+    </div>
+    
+    <div class="quiz-question">
+      <p>4. 2 x 2 = ?</p>
+      <button onclick="submitQuiz('q4', 10)">4</button>
+      <button onclick="submitQuiz('q4', 0)">5</button>
+    </div>
+    
+    <div class="quiz-question">
+      <p>5. Nước sôi ở nhiệt độ bao nhiêu?</p>
+      <button onclick="submitQuiz('q5', 10)">100°C</button>
+      <button onclick="submitQuiz('q5', 0)">0°C</button>
+    </div>
   </div>
 
   <script>
@@ -40,7 +68,10 @@
 
     const video = document.getElementById('mainVideo');
     video.addEventListener('timeupdate', () => onVideoTimeUpdate(video));
-    video.addEventListener('ended', () => onVideoEnded(video));
+    video.addEventListener('ended', () => {
+      onVideoEnded(video);
+      document.getElementById('quizSection').style.display = 'block'; // Mở quiz sau khi video xong
+    });
   </script>
 </body>
 </html>

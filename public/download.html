@@ -1,17 +1,16 @@
 <!DOCTYPE html>
 <html><head><title>Tải Log Excel</title></head>
 <body style="font-family:Arial;text-align:center;padding:50px;">
-  <h1>Tải file log Excel hôm nay</h1>
-  <button onclick="downloadToday()" style="padding:15px 30px;font-size:18px;">
-    Tải learning_log_2025-12-09.xlsx
+  <h1>Tải file log Excel</h1>
+  <button onclick="download()" style="padding:15px 30px;font-size:18px;">
+    Tải learning_log.xlsx
   </button>
   <script>
-    async function downloadToday() {
-      const date = new Date().toISOString().slice(0,10);
-      const url = `/logs/learning_log_${date}.xlsx`;
+    async function download() {
+      const url = '/logs/learning_log.xlsx';
       const a = document.createElement('a');
       a.href = url;
-      a.download = `learning_log_${date}.xlsx`;
+      a.download = 'learning_log.xlsx';
       a.click();
     }
   </script>

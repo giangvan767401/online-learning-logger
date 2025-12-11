@@ -16,13 +16,15 @@ app.use(express.static('public'));
 // Tạo thư mục logs
 if (!fs.existsSync('./logs')) fs.mkdirSync('./logs');
 
-// Hàm lấy workbook AN TOÀN (không crash khi file bị corrupt)
-async function getWorkbookSafe(dateStr) {
-  const filename = `logs/learning_log_${dateStr}.xlsx`;
+// File log duy nhất
+const FILENAME = 'logs/learning_log.xlsx';
+
+// Hàm lấy workbook AN TOÀN (1 file duy nhất)
+async function getWorkbookSafe() {
   const workbook = new ExcelJS.Workbook();
 
-  // Nếu file chưa tồn tại → tạo mới luôn
-  if (!fs.existsSync(filename)) {
+  // Nếu file chưa tồn tại → tạo mới
+  if (!fs.existsSync(FILENAME)) {
     const worksheet = workbook.addWorksheet('Learning Logs');
     worksheet.columns = [
       { header: 'Thời gian', key: 'timestamp', width: 22 },
@@ -44,16 +46,15 @@ async function getWorkbookSafe(dateStr) {
     return { workbook, worksheet };
   }
 
-  // Nếu file tồn tại → thử đọc, nếu lỗi → đổi tên file hỏng + tạo mới
+  // Nếu file tồn tại → thử đọc, nếu lỗi → đổi tên + tạo mới
   try {
-    await workbook.xlsx.readFile(filename);
+    await workbook.xlsx.readFile(FILENAME);
     return { workbook, worksheet: workbook.getWorksheet('Learning Logs') || workbook.addWorksheet('Learning Logs') };
   } catch (err) {
-    console.warn(`File Excel bị lỗi → đổi tên và tạo file mới: ${filename}`);
-    // Đổi tên file hỏng để không bị đọc lại
-    const backupName = `${filename.replace('.xlsx', '')}_corrupted_${Date.now()}.xlsx`;
-    fs.renameSync(filename, backupName);
-    // Tạo file mới
+    console.warn(`File Excel bị lỗi → đổi tên và tạo mới: ${FILENAME}`);
+    const backupName = `logs/learning_log_corrupted_${Date.now()}.xlsx`;
+    fs.renameSync(FILENAME, backupName);
+    // Tạo mới
     const worksheet = workbook.addWorksheet('Learning Logs');
     worksheet.columns = [
       { header: 'Thời gian', key: 'timestamp', width: 22 },
@@ -79,8 +80,7 @@ async function getWorkbookSafe(dateStr) {
 // API ghi log
 app.post('/api/log', async (req, res) => {
   try {
-    const today = new Date().toISOString().slice(0, 10);
-    const { workbook, worksheet } = await getWorkbookSafe(today);
+    const { workbook, worksheet } = await getWorkbookSafe();
 
     const logEntry = {
       timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
@@ -99,7 +99,7 @@ app.post('/api/log', async (req, res) => {
     };
 
     worksheet.addRow(logEntry);
-    await workbook.xlsx.writeFile(`logs/learning_log_${today}.xlsx`);
+    await workbook.xlsx.writeFile(FILENAME);
 
     res.json({ status: 'success' });
   } catch (err) {
@@ -114,5 +114,5 @@ app.use('/logs', express.static('logs'));
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server chạy ổn định tại port ${PORT}`);
-  console.log(`Tải log hôm nay: /download`);
+  console.log(`Tải log: /download (file learning_log.xlsx)`);
 });
