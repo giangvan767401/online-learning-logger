@@ -1,19 +1,24 @@
 <!DOCTYPE html>
-<html><head><title>Tải Log Excel</title></head>
+<html>
+<head>
+  <title>Tải Log Excel</title>
+</head>
 <body style="font-family:Arial;text-align:center;padding:50px;">
   <h1>Tải file log Excel</h1>
+
   <button onclick="download()" style="padding:15px 30px;font-size:18px;">
     Tải learning_log.xlsx
   </button>
+
   <script>
     function download() {
-      const url = '/logs/learning_log.xlsx?t=' + Date.now();
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'learning_log.xlsx';
-      a.click();
+      const url = '/api/download?t=' + Date.now();
+      window.location.href = url;
     }
   </script>
+
   <p>Nếu chưa có file: Hãy học + bấm Đăng xuất 1 lần!</p>
-  <hr><p><a href="/">← Về trang đăng nhập</a></p>
-</body></html>
+  <hr>
+  <p><a href="/">← Về trang đăng nhập</a></p>
+</body>
+</html>
